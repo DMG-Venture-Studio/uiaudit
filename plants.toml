@@ -34,6 +34,14 @@ name = "tests"
 run = ["uv", "run", "pytest", "-q"]
 
 [[check]]
+name = "one-home"
+run = ["uv", "run", "python", "tools/one_home.py"]
+
+[[check]]
+name = "ways-in"
+run = ["uv", "run", "python", "tools/ways_in.py"]
+
+[[check]]
 name = "surfaces-render"
 run = ["uv", "run", "python", "tools/render_surfaces.py", "--check"]
 
@@ -224,3 +232,37 @@ edits = [
   { file = "src/uiaudit/surfaces/mcp.py", append = "\n\ndef listing() -> list[str]:\n    \"\"\"Nothing.\"\"\"\n    return []\n" },
 ]
 expect = { check = "surface-parity", says = "does not expose" }
+
+[[plant]]
+label = "the same literal bound to a constant in two modules"
+edits = [
+  { file = "src/uiaudit/run/model.py", append = "\nDEFAULT_THEME = \"light\"\n" },
+  { file = "src/uiaudit/finding/model.py", append = "\nTHEME = \"light\"\n" },
+]
+expect = { check = "one-home", says = "two modules" }
+
+[[plant]]
+label = "a literal spelled out where a constant names it"
+edits = [
+  { file = "src/uiaudit/run/model.py", append = "\nDEFAULT_THEME = \"light\"\n" },
+  { file = "src/uiaudit/run/rules.py", append = "\n\ndef is_light(theme: str) -> bool:\n    \"\"\"Whether the theme is the light one.\"\"\"\n    return theme == \"light\"\n" },
+]
+expect = { check = "one-home", says = "spelled out" }
+
+[[plant]]
+label = "a main guard in a noun, spelled backwards"
+file = "src/uiaudit/run/ops.py"
+append = "\nif \"__main__\" == __name__:\n    raise SystemExit(0)\n"
+expect = { check = "ways-in", says = "main guard" }
+
+[[plant]]
+label = "a module loaded by name through an import alias"
+file = "src/uiaudit/run/rules.py"
+append = "import importlib as loader\n\n\ndef load(name: str) -> object:\n    \"\"\"Load a module by name.\"\"\"\n    return loader.import_module(name)\n"
+expect = { check = "ways-in", says = "load by name" }
+
+[[plant]]
+label = "python -m spelled inside a noun"
+file = "src/uiaudit/run/render.py"
+append = "\nCOMMAND = [\"python\", \"-m\", \"uiaudit\", \"run\", \"start\"]\n"
+expect = { check = "ways-in", says = "python -m" }

@@ -30,8 +30,8 @@ Read this before writing code. Do not weaken it to make a change pass.
 | Tests | pass; a skipped database test is a failure | `uv run pytest` | stop, push, CI | starter |
 | Harness | the context every session loads stays under the budgets in `harness.toml`, and no always-loaded file names a path that does not exist | `uv run python tools/toolkit/harness_audit.py --gate` | commit, CI | starter |
 | Plants | every check refuses its planted violation, and the tree comes back clean | `uv run python tools/toolkit/prove_checks.py plants.toml` | weekly in CI; push when a check changes | starter |
-| One home | a literal bound to constants in two modules, or spelled out where a constant names it | the toolkit's one-home check | stop, push, CI | to build |
-| Ways in | no main guard, load-by-name or `python -m` outside `src/uiaudit/surfaces/` | the toolkit's ways-in reader with ruff `banned-api` | stop, push, CI | to build |
+| One home | a literal bound to constants in two modules, or spelled out where a constant names it | `uv run python tools/one_home.py` | stop, push, CI | built |
+| Ways in | no main guard, load-by-name or `python -m` outside `src/uiaudit/surfaces/`, and every console script points into the surfaces; ruff's `banned-api` refuses the direct spellings | `uv run python tools/ways_in.py` | stop, push, CI | built |
 | Surface parity | every operation on every surface it declares; the committed OpenAPI document, MCP tool list and CLI help under `docs/api/` equal what the catalog renders | `uv run python tools/render_surfaces.py --check && uv run pytest -q tests/test_surface_parity.py` | stop, push, CI | built |
 | Debt ratchet | no ledger grows against `main`, no rule removed, no limit raised, unless the commit says `Debt-Raised: <reason>` | the toolkit's ratchet in the commit-msg hook | commit, CI | to build |
 | No bypass | `--no-verify`, `-n` and hooks-path overrides refused | a Claude Code PreToolUse hook and the git hooks, each with a plant | every command | to build |

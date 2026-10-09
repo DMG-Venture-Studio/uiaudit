@@ -28,14 +28,18 @@
     ],
     "on_stop": [
       {
-        "name": "contracts, types, dependencies and tests",
+        "name": "the stop-stage rows of CONSTRAINTS.md",
         "paths": [
           "src/**",
           "tests/**",
           "tools/**",
-          "project-spec.toml"
+          "project-spec.toml",
+          "contracts.toml",
+          "docs/api/**",
+          "CONSTRAINTS.md",
+          "pyproject.toml"
         ],
-        "run": "uv run python tools/toolkit/render_import_contracts.py --check project-spec.toml contracts.toml src/uiaudit && PYTHONPATH=src uv run lint-imports --config contracts.toml && uv run pyrefly check && uv run deptry src && uv run pytest -q"
+        "run": "uv run python tools/check.py --stage stop"
       }
     ]
   },
