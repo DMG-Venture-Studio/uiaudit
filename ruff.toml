@@ -6,7 +6,8 @@
 target-version = "py312"
 line-length = 110
 src = ["src", "tests"]
-extend-exclude = [".claude/skills/better-cli"]
+# ruff 0.16 formats Python blocks inside Markdown; the briefs under sources/ are kept verbatim.
+extend-exclude = [".claude/skills/better-cli", "docs/decisions/sources"]
 
 [format]
 docstring-code-format = true
