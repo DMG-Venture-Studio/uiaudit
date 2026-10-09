@@ -1,0 +1,47 @@
+{
+  "extraKnownMarketplaces": {
+    "serial-build-harness": {
+      "source": {
+        "source": "github",
+        "repo": "DMG-Venture-Studio/serial-build-harness"
+      }
+    },
+    "addy-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "addyosmani/agent-skills"
+      }
+    },
+    "mcp-legibility": {
+      "source": {
+        "source": "github",
+        "repo": "DMG-Venture-Studio/mcp-legibility"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "serial-build@serial-build-harness": true,
+    "agent-skills@addy-agent-skills": true,
+    "mcp-legibility@mcp-legibility": true
+  },
+  "permissions": {
+    "deny": [
+      "Skill(agent-skills:spec-driven-development)",
+      "Skill(agent-skills:spec-driven-development *)",
+      "Skill(agent-skills:planning-and-task-breakdown)",
+      "Skill(agent-skills:planning-and-task-breakdown *)",
+      "Skill(agent-skills:shipping-and-launch)",
+      "Skill(agent-skills:shipping-and-launch *)",
+      "Skill(agent-skills:spec)",
+      "Skill(agent-skills:spec *)",
+      "Skill(agent-skills:plan)",
+      "Skill(agent-skills:plan *)",
+      "Skill(agent-skills:build)",
+      "Skill(agent-skills:build *)",
+      "Skill(agent-skills:ship)",
+      "Skill(agent-skills:ship *)",
+      "Edit(/tasks/**)",
+      "Edit(/SPEC.md)"
+    ]
+  }
+}

@@ -1,0 +1,198 @@
+# The planted violations for the Python side: one per rule that matters, each with the check that must
+# refuse it and words its refusal must contain. Run from the repository root:
+#   uv run python tools/toolkit/prove_checks.py plants.toml
+# Every check added later gets its plant here before anything relies on it.
+
+[[check]]
+name = "contracts"
+prepare = [["uv", "run", "python", "tools/toolkit/render_import_contracts.py", "--check", "project-spec.toml", "contracts.toml", "src/uiaudit"]]
+run = ["uv", "run", "lint-imports", "--config", "contracts.toml", "--no-cache"]
+env = { PYTHONPATH = "src" }
+
+[[check]]
+name = "ruff"
+run = ["uv", "run", "ruff", "check", "."]
+
+[[check]]
+name = "format"
+run = ["uv", "run", "ruff", "format", "--check", "."]
+
+[[check]]
+name = "types"
+run = ["uv", "run", "pyrefly", "check"]
+
+[[check]]
+name = "deps"
+run = ["uv", "run", "deptry", "src"]
+
+[[check]]
+name = "harness"
+run = ["uv", "run", "python", "tools/toolkit/harness_audit.py", "--gate"]
+
+[[check]]
+name = "tests"
+run = ["uv", "run", "pytest", "-q"]
+
+[[plant]]
+label = "a role imports a role above it"
+file = "src/uiaudit/run/model.py"
+append = "from uiaudit.run import ops\n"
+expect = { check = "contracts", says = "Roles" }
+
+[[plant]]
+label = "a module name outside the role vocabulary"
+file = "src/uiaudit/run/helpers.py"
+create = "\"\"\"Helpers.\"\"\"\n"
+expect = { check = "contracts", says = "not listed as layers" }
+
+[[plant]]
+label = "a new top-level module"
+file = "src/uiaudit/utils.py"
+create = "\"\"\"Utils.\"\"\"\n"
+expect = { check = "contracts", says = "uiaudit.utils" }
+
+[[plant]]
+label = "a package the spec does not declare"
+file = "src/uiaudit/undeclared/__init__.py"
+create = "\"\"\"Undeclared.\"\"\"\n"
+expect = { check = "contracts", says = "uiaudit.undeclared" }
+
+[[plant]]
+label = "a flow or boot reaches a noun's ops without the catalog"
+file = "src/uiaudit/boot.py"
+append = "from uiaudit.run import ops\n"
+expect = { check = "contracts", says = "Above the nouns" }
+
+[[plant]]
+label = "the kernel imports a surface"
+file = "src/uiaudit/kernel/envelope.py"
+append = "from uiaudit.surfaces import cli\n"
+expect = { check = "contracts", says = "Ways in are leaves" }
+
+[[plant]]
+label = "the kernel imports a noun"
+file = "src/uiaudit/kernel/errors.py"
+append = "from uiaudit.run import model\n"
+expect = { check = "contracts", says = "Tiers" }
+
+[[plant]]
+label = "test tooling in the runtime"
+file = "src/uiaudit/run/model.py"
+append = "import pytest\n"
+expect = { check = "contracts", says = "Test tooling" }
+
+[[plant]]
+label = "an import ring inside the kernel"
+edits = [
+  { file = "src/uiaudit/kernel/errors.py", append = "from uiaudit.kernel import envelope\n" },
+  { file = "src/uiaudit/kernel/envelope.py", append = "from uiaudit.kernel import errors\n" },
+]
+expect = { check = "contracts", says = "No cycles" }
+
+[[plant]]
+label = "an outside package imported where the spec gives it no home, contracts not re-rendered"
+file = "src/uiaudit/run/model.py"
+append = "import playwright\n"
+expect = { check = "contracts", says = "is not the render of" }
+
+[[plant]]
+label = "a noun imports a noun the spec does not let it depend on"
+file = "src/uiaudit/environment/model.py"
+append = "from uiaudit.run import model\n"
+expect = { check = "contracts", says = "Tiers" }
+
+[[plant]]
+label = "a noun reaches below its dependency's ops and model"
+file = "src/uiaudit/run/ops.py"
+append = "from uiaudit.environment import rules\n"
+expect = { check = "contracts", says = "Tiers" }
+
+[[plant]]
+label = "one surface imports another"
+file = "src/uiaudit/surfaces/http.py"
+append = "from uiaudit.surfaces import cli\n"
+expect = { check = "contracts", says = "Surfaces never import" }
+
+[[plant]]
+label = "a noun imports an adapter instead of asking for a resource"
+file = "src/uiaudit/run/model.py"
+append = "from uiaudit.adapters import browser\n"
+expect = { check = "contracts", says = "Tiers" }
+
+[[plant]]
+label = "an adapter imports a noun"
+file = "src/uiaudit/adapters/browser.py"
+append = "from uiaudit.run import model\n"
+expect = { check = "contracts", says = "Tiers" }
+
+[[plant]]
+label = "a flow calls a noun's ops directly"
+file = "src/uiaudit/flows/audit.py"
+append = "from uiaudit.run import ops\n"
+expect = { check = "contracts", says = "Above the nouns" }
+
+[[plant]]
+label = "every exception swallowed"
+file = "src/uiaudit/run/model.py"
+append = "\n\ndef swallow() -> None:\n    \"\"\"Swallow.\"\"\"\n    try:\n        int(\"x\")\n    except Exception:\n        pass\n"
+expect = { check = "ruff", says = "blind-except" }
+
+[[plant]]
+label = "print outside a surface"
+file = "src/uiaudit/run/model.py"
+append = "\n\ndef shout() -> None:\n    \"\"\"Shout.\"\"\"\n    print(1)\n"
+expect = { check = "ruff", says = "print" }
+
+[[plant]]
+label = "an import hidden inside a function"
+file = "src/uiaudit/run/model.py"
+append = "\n\ndef late() -> str:\n    \"\"\"Late.\"\"\"\n    import json\n\n    return json.dumps(1)\n"
+expect = { check = "ruff", says = "import-outside-top-level" }
+
+[[plant]]
+label = "a relative import"
+file = "src/uiaudit/run/model.py"
+append = "from . import model\n"
+expect = { check = "ruff", says = "relative-imports" }
+
+[[plant]]
+label = "Any instead of a named type"
+file = "src/uiaudit/run/model.py"
+append = "\nfrom typing import Any\n\nX: Any = 1\n"
+expect = { check = "ruff", says = "banned-api" }
+
+[[plant]]
+label = "an unformatted line"
+file = "src/uiaudit/run/model.py"
+append = "\nX = {  'a':1 }\n"
+expect = { check = "format", says = "would be reformatted" }
+
+[[plant]]
+label = "a value passed where the type says otherwise"
+file = "src/uiaudit/run/model.py"
+append = "\n\nWRONG: int = \"text\"\n"
+expect = { check = "types", says = "bad-assignment" }
+
+[[plant]]
+label = "an import of a package the project does not declare"
+file = "src/uiaudit/run/model.py"
+append = "import yaml\n"
+expect = { check = "deps", says = "DEP001" }
+
+[[plant]]
+label = "an always-loaded rule that blows the context budget"
+file = ".claude/rules/planted.md"
+create = "# Planted\n\nEvery word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. Every word here loads. \n"
+expect = { check = "harness", says = "load into every session" }
+
+[[plant]]
+label = "an always-loaded rule that names a file that does not exist"
+file = ".claude/rules/planted.md"
+create = "# Planted\n\nRead `docs/missing.md` before anything.\n"
+expect = { check = "harness", says = "path(s) that do not exist" }
+
+[[plant]]
+label = "a failing test"
+file = "tests/test_planted.py"
+create = "def test_planted():\n    assert 1 == 2\n"
+expect = { check = "tests", says = "failed" }

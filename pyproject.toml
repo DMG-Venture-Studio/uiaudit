@@ -1,0 +1,31 @@
+[project]
+name = "uiaudit"
+version = "0.0.0"
+description = "uiaudit is an agent-driven UI audit that captures every screen state of an app and turns accessibility and look-and-feel findings into recommendations and a fix plan a coding agent can execute"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+uiaudit = "uiaudit.surfaces.cli:main"
+
+[dependency-groups]
+dev = ["ruff==0.16.10", "import-linter==2.15", "pyrefly==1.3.2", "pytest==9.1.1", "deptry==0.25.1"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/uiaudit"]
+
+[tool.pyrefly]
+project-includes = ["src", "tests", "tools"]
+search-path = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# tests/<noun>/test_<role>.py repeats file names across nouns, so test modules are imported by path.
+addopts = ["--import-mode=importlib"]
+
+[tool.deptry]
+known_first_party = ["uiaudit"]

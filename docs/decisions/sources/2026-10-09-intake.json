@@ -1,0 +1,226 @@
+{
+ "date": "2026-10-09",
+ "project": {
+  "name": "uiaudit",
+  "slug": "uiaudit",
+  "package": "uiaudit",
+  "summary": "uiaudit is an agent-driven UI audit that captures every screen state of an app and turns accessibility and look-and-feel findings into recommendations and a fix plan a coding agent can execute. It removes hours of hunting by hand through UI guidance and screens.",
+  "python": "3.12",
+  "database": "none"
+ },
+ "repo": {
+  "org": "DMG-Venture-Studio",
+  "name": "uiaudit",
+  "visibility": "public",
+  "remote": "created"
+ },
+ "surfaces": [
+  "cli",
+  "http",
+  "mcp"
+ ],
+ "externals": {
+  "surface_frameworks": {
+   "cli": "typer",
+   "http": "fastapi",
+   "mcp": "fastmcp"
+  },
+  "lazy": [
+   "playwright"
+  ]
+ },
+ "nouns": [
+  {
+   "name": "environment",
+   "purpose": "An app under audit in one environment, local or staging: its config, stored sign-in and health.",
+   "operations": [
+    "environment.check",
+    "environment.sign_in"
+   ],
+   "roles": [
+    "ops",
+    "rules",
+    "model"
+   ],
+   "depends_on": []
+  },
+  {
+   "name": "run",
+   "purpose": "One capture of the route, state, viewport and theme matrix, and cell-by-cell comparison across runs.",
+   "operations": [
+    "run.start",
+    "run.show",
+    "run.list",
+    "run.compare"
+   ],
+   "roles": [
+    "ops",
+    "render",
+    "rules",
+    "model"
+   ],
+   "depends_on": [
+    "environment"
+   ]
+  },
+  {
+   "name": "finding",
+   "purpose": "One problem in one cell, with its recommendation, triage status and identity across runs.",
+   "operations": [
+    "finding.add",
+    "finding.list",
+    "finding.accept",
+    "finding.reject",
+    "finding.diff"
+   ],
+   "roles": [
+    "ops",
+    "render",
+    "rules",
+    "model"
+   ],
+   "depends_on": []
+  },
+  {
+   "name": "plan",
+   "purpose": "The task plan built from accepted findings that a coding agent executes in the audited repo.",
+   "operations": [
+    "plan.create",
+    "plan.show"
+   ],
+   "roles": [
+    "ops",
+    "render",
+    "rules",
+    "model"
+   ],
+   "depends_on": [
+    "finding"
+   ]
+  },
+  {
+   "name": "regression_test",
+   "purpose": "A generated test in the audited repo that fails if a closed finding comes back.",
+   "operations": [
+    "regression_test.create",
+    "regression_test.list"
+   ],
+   "roles": [
+    "ops",
+    "render",
+    "model"
+   ],
+   "depends_on": [
+    "finding"
+   ]
+  },
+  {
+   "name": "design_reference",
+   "purpose": "Optional design tokens and reference screens for the audited app, and the check of captured styles against them.",
+   "operations": [
+    "design_reference.load",
+    "design_reference.check"
+   ],
+   "roles": [
+    "ops",
+    "rules",
+    "model"
+   ],
+   "depends_on": []
+  }
+ ],
+ "flows": [
+  {
+   "name": "audit",
+   "purpose": "Capture the matrix, check it against the design reference, and record the findings.",
+   "uses": [
+    "run.start",
+    "design_reference.check",
+    "finding.add"
+   ]
+  },
+  {
+   "name": "verify_fix",
+   "purpose": "Recapture the cells a fix touched, confirm its findings closed, and lock the fix with regression tests.",
+   "uses": [
+    "run.start",
+    "finding.diff",
+    "regression_test.create"
+   ]
+  }
+ ],
+ "adapters": [
+  {
+   "name": "browser",
+   "wraps": "playwright",
+   "implements": "Browser",
+   "purpose": "Drives Chromium to reach each state and capture screenshots, element boxes and computed styles."
+  },
+  {
+   "name": "accessibility",
+   "wraps": "axe_playwright_python",
+   "implements": "AccessibilityScanner",
+   "purpose": "Runs axe-core on a captured page and returns its raw results."
+  },
+  {
+   "name": "images",
+   "wraps": "PIL",
+   "implements": "ImageKit",
+   "purpose": "Draws finding boxes, makes thumbnails and computes diff images."
+  },
+  {
+   "name": "views",
+   "wraps": "prefab_ui",
+   "implements": "ReviewViews",
+   "purpose": "Builds the review UI views served inline in Claude, in the local browser and as a static report."
+  }
+ ],
+ "authority": {
+  "principals": [
+   "operator",
+   "agent",
+   "ci"
+  ],
+  "spend": []
+ },
+ "first_operation": "run.start",
+ "decisions": {
+  "rejected": [
+   "- A sqlite index of runs and findings: a second source of truth beside the JSONL files.",
+   "- A jobs way in: nightly audits were dropped; audits run when someone is changing UI.",
+   "- environment.check or finding.add as the walking skeleton: neither proves capture works.",
+   "- A bundled fixture page as the first demo: it proves nothing about voice-resume.",
+   "- The repository name dmg-uiaudit: the owner chose uiaudit.",
+   "- The factory add-on: no queue or hand-off pain has been observed yet."
+  ],
+  "reopens": "A second app needs a capture model the route, state, viewport and theme matrix cannot express, or findings need concurrent writers that files cannot serve."
+ },
+ "addons": {
+  "serial_build": true,
+  "agent_skills": true,
+  "factory": false
+ },
+ "owner": {
+  "name": "Fili",
+  "writing": "- Terse, consequence first, no padding.\n- Push back with the rule broken and what it costs.\n- Name things by what they are; never numbered labels for issues or stages."
+ },
+ "harness": {
+  "what_it_is": "An agent-driven UI audit that captures every screen state of an app, critiques it for accessibility and for look, feel and flow, and turns that into recommendations and a fix plan a coding agent can execute.",
+  "who_uses_it": "Fili and the studio's coding agents, auditing the studio's own frontends, starting with voice-resume.",
+  "today_instead": "Working by hand through huge indexes of UI and UX guidance to find what is wrong, then working out the right feel and flow. Both are hard; the feel and flow part is hardest.",
+  "failure_in_a_year": "It does not improve throughput, or it does not give good advice on how to fix things or make them look and feel better.",
+  "goals": "- A UI pass takes minutes of review, not hours of hunting through screens, so more UI ships each week.\n- Every finding carries a concrete recommendation on how to fix it or make it look and feel better, not just what is wrong.\n- A coding agent with no context in the audited repo can implement the plan from its file paths and done-checks.\n- Before and after previews of every proposal let Fili decide by looking, and fixes stay fixed.",
+  "not_this": "- Not a Lighthouse score or a site-wide crawler; it audits the states that matter.\n- Not scheduled audits; it runs when someone is changing UI.\n- Not a hosted service in this version.\n- Not a designer replacement: it adds critique and proposals with an actionable plan for a naive coding agent in the audited repo, with before and after previews where possible, and the human makes the call.",
+  "floors": "- The engine never calls a model; judgment enters only as validated findings.\n- An unchanged UI yields identical deterministic findings on rerun, and a coverage gap fails loudly, never as a clean report.\n- Only a human accepts or rejects a finding; agents raise findings but never triage them.\n- Staging runs are read-only against a test account, make no paid calls without an explicit flag, and sign-in files are never committed.\n- Every finding carries a recommendation; a finding without one is rejected.\n- Agents keep improving their recommendations: after each critique they propose the skills or MCP servers that would have made the advice better, for Fili to approve.",
+  "first_stage": "first-local-audit",
+  "first_stage_goal": "Running uiaudit against voice-resume on Fili's Mac captures every configured cell with accessibility findings, including the recording, microphone-denied and upload-failure states.",
+  "first_gate_slug": "capture-one-cell",
+  "first_gate_demo": "With voice-resume's dev server running on the Mac, run uiaudit for one route, one state and one viewport. The screenshot for that cell appears in the run folder and the command prints a run summary with the cell count and how many findings it found. Break it: stop the dev server and run it again; it must exit with an environment error that names the command to fix it, never a clean summary.",
+  "first_gate_builds": "run.start through the cli way in: loading the config, the browser adapter, one cell's screenshot, the run manifest with the engine version, and exit codes 0 to 3.",
+  "first_gate_tried_to_break": "Stop the dev server before and during a run; point the config at a route that does not exist; use an expired or missing sign-in; make the state setup throw; run twice on an unchanged UI and compare the findings; remove the browser from the tool environment.",
+  "first_gate_acceptance": "I ran uiaudit against voice-resume, saw the cell's screenshot and summary, and a broken app failed loudly with the fix instead of passing.",
+  "later_gates": "Later: one line each, until intake writes them out in full.\n- full-matrix: Fili runs the whole route, state, viewport and theme matrix, including fake-microphone and mocked-failure states, and two reruns give identical findings.\n## Stage: review-and-advice\nGoal: Fili sees every finding on its screenshot with a recommendation and a before and after preview, and decides by looking.\n- review-and-compare: Fili browses findings on annotated screenshots, compares any cell before and after with a slider, and triages in the browser or inline in Claude.\n- critique-with-recommendations: the design reviewer adds look, feel and flow findings, each with a recommended fix and a preview where possible, and proposes skills or MCP servers that would sharpen its advice.\n## Stage: remediation\nGoal: A coding agent with no context turns accepted findings into fixes that stay fixed.\n- remediation-plan: accepted findings become a task plan with exact files that a naive Claude Code agent executes.\n- fix-loop: an agent fixes one finding per commit, reruns the affected cells, and a generated regression test fails if the fix is reverted.\n## Stage: design-and-staging\nGoal: Audits judge against the intended design and reach staging safely.\n- intended-design: off-palette and off-scale styling is flagged against the design tokens, and reference screens join the slider.\n- staging-audit: Fili audits staging on demand, read-only, without spending money unless he asks.",
+  "open_questions": "## mapping-findings-to-source-files\nHow each finding is mapped to the exact source file and line in the audited repo. Proposed: a small dev-only build plugin that stamps rendered elements with their source location, tested in voice-resume before the remediation plan is built. Fallback: a third-party inspector plugin.\n\n## inline-review-ui-inside-claude\nWhether the Claude desktop host accepts the image sizes the review UI needs, runs the slider widget, delivers context updates to the model, and enforces app-only tools. Settled by a half-day test at the start of review-and-compare.\n\n## where-regression-tests-run\nProposed: locally in the first version, run by the fix loop after every fix; revisit when a second app adopts the tool.\n\n## improving-recommendations\nHow the design reviewer proposes skills or MCP servers that would have improved its advice, where those proposals are recorded, and how Fili approves them. Nothing is installed without his yes.",
+  "interview_transcript": "Interview transcript, greenfield intake for uiaudit, 2026-10-08 to 2026-10-09.\n\nQ (Design file): The Claude Design hand-off is Aside's UI (voice-resume), not uiaudit's. The scaffolder's default is to build a hand-off as the first page. How should it go in?\nOptions: Design reference only (Recommended); Also a test fixture; Build it as the first page.\nA: sorry disregard, i'm working on 5 different projects at once\n\nQ (Name): Repo and command name (open issue 'Repository and command name')?\nOptions: dmg-uiaudit / uiaudit (Recommended); uiaudit / uiaudit.\nA: uiaudit / uiaudit\n\nProposed nouns shown as a table: environment (check, sign_in); run (start, show, list, compare; depends on environment); finding (add, list, accept, reject, diff); plan (create, show; depends on finding); regression_test (create, list; depends on finding); design_reference (load, check). Flows: audit (run.start, design_reference.check, finding.add); verify_fix (run.start, finding.diff, regression_test.create). Adapters: browser (playwright), accessibility (axe_playwright_python), images (PIL), views (prefab_ui). Database none; no web way in.\n\nQ (Nouns): Are these the nouns?\nOptions: Use them (Recommended); Change the nouns; Start over.\nA: Use them (Recommended)\n\nQ (Ways in): Ways in?\nOptions: cli (Recommended); mcp (Recommended); http (Recommended); jobs.\nA: cli (Recommended), mcp (Recommended), http (Recommended)\n\nQ (Database): Database?\nOptions: none (Recommended); sqlite.\nA: none (Recommended)\n\nQ (First op): First operation (the walking skeleton)?\nOptions: run.start (Recommended); environment.check; finding.add.\nA: run.start (Recommended)\n\nQ (Folder): Where on your Mac?\nOptions: ~/Dev/uiaudit (Recommended); ~/code/uiaudit.\nA: ~/Dev/uiaudit (Recommended)\n\nQ (Remote): GitHub remote: DMG-Venture-Studio/uiaudit, public. Create it now?\nOptions: Create now (Recommended); First session.\nA: Create now (Recommended)\n\nQ (Add-ons): Add-ons? (Kits added automatically: better-cli for the CLI, mcp-legibility for MCP. No agent-house: nothing calls a model.)\nOptions: serial-build (Recommended); agent-skills (Recommended); factory.\nA: serial-build (Recommended), agent-skills (Recommended)\n\nQ (open, no options): What do the people it's for (you and the studio's agents) do today instead of a UI audit, and what does that cost?\nA: manually work through huge indexes of UI / UX to figure out what's wrong - and then figure out the right feel & flow. both are hard, probably the last part is hardest\n\nQ (open, no options): A year from now, what would failure look like for uiaudit?\nA: it's just not improving throughput, or providing good advice on how to recify or make things look / feel better from a UI / UX perspective\n\nQ (Owner): Owner name the harness uses (the person who runs each demo)?\nOptions: Fili (Recommended); Matt Fili.\nA: Fili (Recommended)\n\nQ (Writing): How should agents write to you in this repo?\nOptions: Terse, consequence first (Recommended); Terse, plus a one-line why.\nA: Terse, consequence first (Recommended)\n\nQ (Floors): Floors: what must never happen? (pick all that apply)\nOptions: Engine never calls a model; Same UI, same findings; Only a human triages; Staging is safe.\nA: Engine never calls a model, Same UI, same findings, Only a human triages, Staging is safe, Agents not providing recommendations, or introspecting on how to improve reccomendations through research to add better skills or MCPs\n\nQ (Not this): What is it deliberately not? (pick all that apply)\nOptions: Not a Lighthouse score; Not a designer replacement; Not a hosted service; Not scheduled audits.\nA: Not a Lighthouse score, Not scheduled audits, Not a hosted service, On two: Not a designer replacement - right, it's additive - it helps by providing critique and propsal on UX/UI with an actionable plan to implement with a naive CC agent in the source repo (e.g., what it's auditing) with previews where possible to demonstrate before and after where the human can ultimately make the call\n\nQ (Goals): Goals (pick all that hold):\nOptions: Faster UI iteration; Advice worth acting on; Plans a naive agent can run; Human makes the call.\nA: Faster UI iteration, Advice worth acting on, Plans a naive agent can run, Human makes the call\n\nQ (First gate): First gate, the walking skeleton (run.start) as you'd demo it:\nOptions: One voice-resume cell (Recommended); Bundled fixture page.\nA: One voice-resume cell (Recommended)\n\nQ (First stage): First stage name and goal:\nOptions: first-local-audit (Recommended); capture-one-cell.\nA: first-local-audit (Recommended)\n\nQ (Later gates): Later gates, in order (deselect any to drop):\nOptions: full-matrix + review-and-compare; critique-with-recommendations; remediation-plan + fix-loop; intended-design + staging.\nA: full-matrix + review-and-compare, critique-with-recommendations, remediation-plan + fix-loop, intended-design + staging\n\nRead-back of the vision, with the recommendation floor split: every finding carries a recommendation (enforced by the findings format); agents propose skills or MCP servers that would improve their advice after each critique, for Fili to approve, never installing anything themselves.\n\nQ (Vision): Is this it?\nOptions: Yes; Change something.\nA: Yes\n"
+ }
+}

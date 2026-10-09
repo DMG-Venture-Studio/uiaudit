@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "owner": {
+    "name": "Fili"
+  },
+  "inbox": "claude_outputs",
+  "generated": [
+    {
+      "path": "contracts.toml",
+      "regenerate": "uv run python tools/toolkit/render_import_contracts.py project-spec.toml contracts.toml src/uiaudit"
+    }
+  ],
+  "checks": {
+    "on_edit": [
+      {
+        "name": "ruff",
+        "paths": [
+          "src/**",
+          "tests/**",
+          "tools/**"
+        ],
+        "run": "uv run ruff check \"$SB_FILE\" && uv run ruff format --check \"$SB_FILE\""
+      }
+    ],
+    "on_stop": [
+      {
+        "name": "contracts, types, dependencies and tests",
+        "paths": [
+          "src/**",
+          "tests/**",
+          "tools/**",
+          "project-spec.toml"
+        ],
+        "run": "uv run python tools/toolkit/render_import_contracts.py --check project-spec.toml contracts.toml src/uiaudit && PYTHONPATH=src uv run lint-imports --config contracts.toml && uv run pyrefly check && uv run deptry src && uv run pytest -q"
+      }
+    ]
+  },
+  "red": {
+    "test_paths": [
+      "tests/*"
+    ]
+  }
+}

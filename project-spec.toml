@@ -1,0 +1,108 @@
+# The architecture of this project, declared once. The import contracts are rendered from this file
+# (`tools/toolkit/render_import_contracts.py`), so the only way to allow an import is to change it here.
+# Every change is a reviewed decision: a decision record, the contracts re-rendered, then the code.
+
+[project]
+name = "uiaudit"
+package = "uiaudit"
+python = "3.12"
+database = "none"
+first_operation = "run.start"
+
+[surfaces]
+cli = true
+http = true
+mcp = true
+jobs = false
+agent_tools = false
+web = false
+
+[externals]
+lazy = ["playwright"]
+surface_frameworks = { cli = "typer", http = "fastapi", mcp = "fastmcp" }
+
+[[nouns]]
+name = "environment"
+purpose = "An app under audit in one environment, local or staging: its config, stored sign-in and health."
+owns = []
+operations = ["environment.check", "environment.sign_in"]
+roles = ["ops", "rules", "model"]
+depends_on = []
+
+[[nouns]]
+name = "run"
+purpose = "One capture of the route, state, viewport and theme matrix, and cell-by-cell comparison across runs."
+owns = []
+operations = ["run.start", "run.show", "run.list", "run.compare"]
+roles = ["ops", "render", "rules", "model"]
+depends_on = ["environment"]
+
+[[nouns]]
+name = "finding"
+purpose = "One problem in one cell, with its recommendation, triage status and identity across runs."
+owns = []
+operations = ["finding.add", "finding.list", "finding.accept", "finding.reject", "finding.diff"]
+roles = ["ops", "render", "rules", "model"]
+depends_on = []
+
+[[nouns]]
+name = "plan"
+purpose = "The task plan built from accepted findings that a coding agent executes in the audited repo."
+owns = []
+operations = ["plan.create", "plan.show"]
+roles = ["ops", "render", "rules", "model"]
+depends_on = ["finding"]
+
+[[nouns]]
+name = "regression_test"
+purpose = "A generated test in the audited repo that fails if a closed finding comes back."
+owns = []
+operations = ["regression_test.create", "regression_test.list"]
+roles = ["ops", "render", "model"]
+depends_on = ["finding"]
+
+[[nouns]]
+name = "design_reference"
+purpose = "Optional design tokens and reference screens for the audited app, and the check of captured styles against them."
+owns = []
+operations = ["design_reference.load", "design_reference.check"]
+roles = ["ops", "rules", "model"]
+depends_on = []
+
+[[flows]]
+name = "audit"
+purpose = "Capture the matrix, check it against the design reference, and record the findings."
+uses = ["run.start", "design_reference.check", "finding.add"]
+
+[[flows]]
+name = "verify_fix"
+purpose = "Recapture the cells a fix touched, confirm its findings closed, and lock the fix with regression tests."
+uses = ["run.start", "finding.diff", "regression_test.create"]
+
+[[adapters]]
+name = "browser"
+wraps = "playwright"
+implements = "Browser"
+purpose = "Drives Chromium to reach each state and capture screenshots, element boxes and computed styles."
+
+[[adapters]]
+name = "accessibility"
+wraps = "axe_playwright_python"
+implements = "AccessibilityScanner"
+purpose = "Runs axe-core on a captured page and returns its raw results."
+
+[[adapters]]
+name = "images"
+wraps = "PIL"
+implements = "ImageKit"
+purpose = "Draws finding boxes, makes thumbnails and computes diff images."
+
+[[adapters]]
+name = "views"
+wraps = "prefab_ui"
+implements = "ReviewViews"
+purpose = "Builds the review UI views served inline in Claude, in the local browser and as a static report."
+
+[authority]
+principals = ["operator", "agent", "ci"]
+spend = []

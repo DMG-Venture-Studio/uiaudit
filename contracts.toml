@@ -1,0 +1,50 @@
+[tool.importlinter]
+root_package = "uiaudit"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Tiers: each package imports only the tiers below it; nouns and adapters never import each other"
+type = "layers"
+containers = ["uiaudit"]
+exhaustive = true
+layers = ["__main__", "surfaces", "boot", "flows", "catalog", "environment | run | finding | plan | regression_test | design_reference | adapters", "kernel"]
+ignore_imports = ["uiaudit.run.ops -> uiaudit.environment.ops", "uiaudit.plan.ops -> uiaudit.finding.ops", "uiaudit.regression_test.ops -> uiaudit.finding.ops", "uiaudit.run.** -> uiaudit.environment.model", "uiaudit.plan.** -> uiaudit.finding.model", "uiaudit.regression_test.** -> uiaudit.finding.model"]
+unmatched_ignore_imports_alerting = "none"
+
+[[tool.importlinter.contracts]]
+name = "Roles: inside a noun, ops over render over rules over store over model, and no other module"
+type = "layers"
+containers = ["uiaudit.environment", "uiaudit.run", "uiaudit.finding", "uiaudit.plan", "uiaudit.regression_test", "uiaudit.design_reference"]
+exhaustive = true
+layers = ["(ops)", "(render)", "(rules)", "(store)", "(model)"]
+
+[[tool.importlinter.contracts]]
+name = "Above the nouns, operations are reached through the catalog and a noun's insides not at all"
+type = "forbidden"
+source_modules = ["uiaudit.flows", "uiaudit.boot", "uiaudit.surfaces"]
+forbidden_modules = ["uiaudit.*.ops", "uiaudit.*.render", "uiaudit.*.rules", "uiaudit.*.store"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Ways in are leaves: nothing imports a surface but __main__"
+type = "protected"
+protected_modules = ["uiaudit.surfaces"]
+allowed_importers = ["uiaudit.__main__"]
+
+[[tool.importlinter.contracts]]
+name = "Surfaces never import each other, and no surface exists that the spec does not name"
+type = "layers"
+containers = ["uiaudit.surfaces"]
+exhaustive = true
+layers = ["(cli) | (http) | (mcp)"]
+
+[[tool.importlinter.contracts]]
+name = "Test tooling never ships in the runtime"
+type = "forbidden"
+source_modules = ["uiaudit"]
+forbidden_modules = ["pytest"]
+
+[[tool.importlinter.contracts]]
+name = "No cycles among siblings at any package level"
+type = "acyclic_siblings"
+ancestors = ["uiaudit", "uiaudit.kernel", "uiaudit.flows"]

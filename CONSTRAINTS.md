@@ -1,0 +1,54 @@
+# Constraints
+
+The quality bar for uiaudit, set before the first line of product code. Every row names the command
+that gives the verdict; a row marked "starter" works now and is proven by a plant in `plants.toml`; a row
+marked "to build" is built by the first Claude Code session, with its plant, and then marked built. How the
+checks are owned and kept: `docs/tech/enforcement.md`.
+
+Read this before writing code. Do not weaken it to make a change pass.
+
+## Floor (always enforced)
+
+- No new suppression: no `noqa`, `type: ignore`, `@ts-ignore`, `biome-ignore`, per-file ignore or
+  contract edit for code you write. When a rule blocks something the conventions require, stop and say which.
+- No unimplemented stubs: no `raise NotImplementedError`, no function whose body is `pass`, no empty `except`.
+- No skipped or deleted tests without a reason in the commit message; a skipped database test is a failure.
+- No secrets in source.
+- This file, `ruff.toml`, `project-spec.toml`, `contracts.toml` and the web configs are not weakened to make a
+  change pass.
+
+## Enforced with commands
+
+| Dimension | Rule | Checked by | Runs at | Status |
+|---|---|---|---|---|
+| Lint | `select = ["ALL"]`, reasoned ignores in `ruff.toml` | `uv run ruff check .` | edit, push, CI | starter |
+| Format | ruff's formatter | `uv run ruff format --check .` | edit, push, CI | starter |
+| Types | every module typed from its first commit | `uv run pyrefly check` | stop, push, CI | starter |
+| Architecture | tiers, roles, noun independence, one home per outside package, surfaces as leaves, no cycles | `PYTHONPATH=src uv run lint-imports --config contracts.toml` | stop, push, CI | starter |
+| Contracts drift | `contracts.toml` is the render of `project-spec.toml` | `uv run python tools/toolkit/render_import_contracts.py --check project-spec.toml contracts.toml src/uiaudit` | stop, push, CI | starter |
+| Dependencies | imported means declared; declared means imported | `uv run deptry src` | stop, push, CI | starter |
+| Tests | pass; a skipped database test is a failure | `uv run pytest` | stop, push, CI | starter |
+| Harness | the context every session loads stays under the budgets in `harness.toml`, and no always-loaded file names a path that does not exist | `uv run python tools/toolkit/harness_audit.py --gate` | commit, CI | starter |
+| Plants | every check refuses its planted violation, and the tree comes back clean | `uv run python tools/toolkit/prove_checks.py plants.toml` | weekly in CI; push when a check changes | starter |
+| One home | a literal bound to constants in two modules, or spelled out where a constant names it | the toolkit's one-home check | stop, push, CI | to build |
+| Ways in | no main guard, load-by-name or `python -m` outside `src/uiaudit/surfaces/` | the toolkit's ways-in reader with ruff `banned-api` | stop, push, CI | to build |
+| Surface parity | every operation on every surface it declares; committed OpenAPI, MCP tool list and CLI help equal what the catalog generates | a parity test and three `--check` renders | stop, push, CI | to build |
+| Debt ratchet | no ledger grows against `main`, no rule removed, no limit raised, unless the commit says `Debt-Raised: <reason>` | the toolkit's ratchet in the commit-msg hook | commit, CI | to build |
+| No bypass | `--no-verify`, `-n` and hooks-path overrides refused | a Claude Code PreToolUse hook and the git hooks, each with a plant | every command | to build |
+| MCP legibility | the server sends an `instructions=` block naming its entry-point tool | mcp-legibility's static probe (`probe_connect.py --repo . --json`) | push | to build |
+
+Every row names the command that produces the verdict. A dimension with no command is an aspiration, not a
+constraint.
+
+## Measured, not yet enforced
+
+None yet. When a number is worth holding (coverage of changed lines, bundle size, an agent run's cost),
+measure it, write today's value here, and hold the direction.
+
+## Exceptions
+
+None. Ledgers start empty and may only shrink against `main`. An exception exists only with
+`Debt-Raised: <reason>` in its commit message, and is listed here with its owner and expiry.
+
+| ID | Rule | Path | Reason | Owner | Expires |
+|---|---|---|---|---|---|

@@ -1,0 +1,4 @@
+better-cli, vendored unmodified from https://github.com/yogin16/better-cli at commit 11bde57, under the
+Apache License 2.0 in LICENSE beside this file. It is vendored rather than installed as a plugin because its
+marketplace entry fails to install on Claude Code 2.1.294 ("source: Invalid input"); the skill itself loads
+fine. Replace this copy with the plugin once the upstream entry is fixed.
