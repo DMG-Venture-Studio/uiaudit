@@ -12,3 +12,6 @@ claude_outputs/*
 !claude_outputs/README.md
 # Claude Code's per-agent worktrees (the red lane works in one) and per-user permissions.
 .claude/worktrees/
+
+# Local state the checks keep: reviewer reports, gate logs. Never committed.
+.harness/

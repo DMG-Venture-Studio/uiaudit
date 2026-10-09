@@ -28,6 +28,7 @@ Read this before writing code. Do not weaken it to make a change pass.
 | Contracts drift | `contracts.toml` is the render of `project-spec.toml` | `uv run python tools/toolkit/render_import_contracts.py --check project-spec.toml contracts.toml src/uiaudit` | stop, push, CI | starter |
 | Dependencies | imported means declared; declared means imported | `uv run deptry src` | stop, push, CI | starter |
 | Tests | pass; a skipped database test is a failure | `uv run pytest` | stop, push, CI | starter |
+| Agent rules | `.claude/rules/noun-*.md` and `tier-*.md` are the render of `project-spec.toml` and the module docstrings, one per noun and tier, each scoped to its paths | `uv run python tools/render_rules.py --check` | stop, push, CI | built |
 | Harness | the context every session loads stays under the budgets in `harness.toml`, and no always-loaded file names a path that does not exist | `uv run python tools/toolkit/harness_audit.py --gate` | commit, CI | starter |
 | Plants | every check refuses its planted violation, and the tree comes back clean (`plants.toml` for the checks, `plants-hooks.toml` for the git and Claude Code hooks) | `make plants` | weekly in CI; push when a check changes | starter |
 | One home | a literal bound to constants in two modules, or spelled out where a constant names it | `uv run python tools/one_home.py` | stop, push, CI | built |
@@ -35,7 +36,8 @@ Read this before writing code. Do not weaken it to make a change pass.
 | Surface parity | every operation on every surface it declares; the committed OpenAPI document, MCP tool list and CLI help under `docs/api/` equal what the catalog renders | `uv run python tools/render_surfaces.py --check && uv run pytest -q tests/test_surface_parity.py` | stop, push, CI | built |
 | Debt ratchet | no ledger under `tools/ledgers/` grows against `main`, no suppression in code outside a ledger, no rule removed, no limit or budget raised, no plant dropped, unless the commit says `Debt-Raised: <reason>` | `uv run python tools/ratchet.py` (the commit-msg hook runs it on the index with the message) | commit-msg, CI | built |
 | No bypass | `--no-verify`, `-n` and hooks-path overrides are refused before they run, a new file off the closed lists is refused, and a clone with the git hooks off is told at session start | `uv run python tools/claude_hooks/prove.py` (the hooks in `.claude/settings.json`, proven by `plants-hooks.toml`) | every command, CI | built |
-| MCP legibility | the server sends an `instructions=` block naming its entry-point tool | mcp-legibility's static probe (`probe_connect.py --repo . --json`) | push | to build |
+| Review | the authority reviewer (grants, spend, secrets) and the sprawl reviewer (an idea's second home) have each reported on the paths `tools/reviewers.toml` gives them since the remote's commit; a report flags, only a missing or stale one refuses | `uv run python tools/review_check.py` | push | built |
+| MCP legibility | the server sends an `instructions=` block naming its entry-point tool | `uv run python tools/mcp_legibility.py` (mcp-legibility's static probe, `probe_connect.py --repo . --json`, from the plugin or fetched at a pinned commit) | push, CI | built |
 
 Every row names the command that produces the verdict. A dimension with no command is an aspiration, not a
 constraint.

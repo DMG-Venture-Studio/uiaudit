@@ -1,0 +1,26 @@
+# The reviewer agents, one question each. A reviewer's report is required at push for any change
+# under the paths it covers, and it flags rather than blocks: a report with findings still passes,
+# and the findings are printed; only a missing or stale report refuses the push. The agents are in
+# .claude/agents/<name>-reviewer.md; tools/review_check.py reads this file.
+
+[[reviewer]]
+name = "authority"
+question = "Does this change grant authority, spend money, or touch secrets it should not?"
+paths = [
+  "src/uiaudit/kernel/principals.py",
+  "src/uiaudit/catalog/**",
+  "src/uiaudit/boot.py",
+  "src/uiaudit/surfaces/**",
+  "src/uiaudit/adapters/**",
+  "pyproject.toml",
+  ".github/**",
+  ".claude/settings.json",
+  ".claude/serial-build.json",
+  "tools/git_hooks/**",
+  "tools/claude_hooks/**",
+]
+
+[[reviewer]]
+name = "sprawl"
+question = "Does this change give an idea a second home?"
+paths = ["src/**", "project-spec.toml", "docs/tech/**", "tools/*.py"]

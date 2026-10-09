@@ -1,0 +1,32 @@
+# Every push and pull request runs the same checks the hooks run locally, through the same runner,
+# so CI never disagrees with a session. Branch protection on main requires this job.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.0"
+          python-version: "3.12"
+      - name: Tools
+        run: uv sync --frozen
+      - name: Every CI-stage row of CONSTRAINTS.md
+        run: make check
+      - name: Debt ratchet against the commit the remote held
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: uv run python tools/ratchet.py --base ${{ github.event.before }}
+      - name: The git hooks are executable in the tree
+        run: test -x tools/git_hooks/pre-commit && test -x tools/git_hooks/commit-msg && test -x tools/git_hooks/pre-push && test -x tools/git_hooks/pre-merge-commit

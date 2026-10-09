@@ -1,0 +1,44 @@
+# Weekly: every check refuses its planted violation, and the ledgers are counted, so a check that
+# quietly stopped working and a ledger that quietly grew are both seen without anyone looking.
+name: plants
+
+on:
+  schedule:
+    - cron: "41 13 * * 1"   # Mondays 13:41 UTC, after the harness audit
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.0"
+          python-version: "3.12"
+      - name: Tools
+        run: uv sync --frozen
+      - name: Prove every check and every hook
+        run: make plants 2>&1 | tee plants.log
+      - name: Ledger counts
+        if: always()
+        run: |
+          {
+            echo "## Ledgers"
+            echo "| Ledger | Entries |"
+            echo "|---|---|"
+            for f in tools/ledgers/*.txt; do
+              n=$(grep -v '^#' "$f" | grep -c . || true)
+              echo "| $(basename "$f" .txt) | $n |"
+            done
+            echo
+            echo "## Plants"
+            echo '```'
+            cat plants.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

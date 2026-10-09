@@ -12,6 +12,14 @@
     {
       "path": "docs/api/*",
       "regenerate": "uv run python tools/render_surfaces.py"
+    },
+    {
+      "path": ".claude/rules/noun-*.md",
+      "regenerate": "uv run python tools/render_rules.py"
+    },
+    {
+      "path": ".claude/rules/tier-*.md",
+      "regenerate": "uv run python tools/render_rules.py"
     }
   ],
   "checks": {

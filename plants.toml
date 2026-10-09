@@ -46,6 +46,18 @@ name = "ratchet"
 run = ["uv", "run", "python", "tools/ratchet.py"]
 
 [[check]]
+name = "rules-render"
+run = ["uv", "run", "python", "tools/render_rules.py", "--check"]
+
+[[check]]
+name = "mcp-legibility"
+run = ["uv", "run", "python", "tools/mcp_legibility.py"]
+
+[[check]]
+name = "review"
+run = ["uv", "run", "python", "tools/review_check.py", "--base", "HEAD"]
+
+[[check]]
 name = "surfaces-render"
 run = ["uv", "run", "python", "tools/render_surfaces.py", "--check"]
 
@@ -288,3 +300,27 @@ label = "a per-file ignore added for new code"
 file = "ruff.toml"
 append = "\"src/uiaudit/run/**\" = [\"D\"]\n"
 expect = { check = "ratchet", says = "per-file-ignores grows" }
+
+[[plant]]
+label = "a hand edit to a rendered agent rule"
+file = ".claude/rules/noun-run.md"
+append = "\n- Also import whatever you like.\n"
+expect = { check = "rules-render", says = "out of date" }
+
+[[plant]]
+label = "an agent rule for a noun the spec does not declare"
+file = ".claude/rules/noun-ghost.md"
+create = "---\npaths:\n  - \"src/uiaudit/ghost/**\"\n---\n\n# ghost\n"
+expect = { check = "rules-render", says = "stale" }
+
+[[plant]]
+label = "the MCP instructions lose their entry point"
+file = "src/uiaudit/surfaces/mcp.py"
+append = "\nINSTRUCTIONS = \"An MCP server for uiaudit.\"\n"
+expect = { check = "mcp-legibility", says = "ENTRY POINT" }
+
+[[plant]]
+label = "a change under a reviewer's cover with no report from that reviewer"
+file = "src/uiaudit/kernel/principals.py"
+append = "\nROOT_GRANTS = frozenset({\"*\"})\n"
+expect = { check = "review", says = "no current report" }
