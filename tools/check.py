@@ -42,9 +42,9 @@ class Row:
     def runs_at_stage(self, stage: str, *, checks_changed: bool) -> bool:
         """Whether this row belongs to the stage; weekly rows only to the weekly stage."""
         cell = self.runs_at.lower()
+        if stage == "push" and CONDITIONAL in cell:
+            return checks_changed
         if "weekly" in cell and stage != "weekly":
-            return False
-        if CONDITIONAL in cell and not checks_changed:
             return False
         return stage in re.findall(r"[a-z][a-z-]*", cell)
 

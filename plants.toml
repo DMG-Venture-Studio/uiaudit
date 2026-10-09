@@ -208,7 +208,7 @@ expect = { check = "types", says = "bad-assignment" }
 [[plant]]
 label = "an import of a package the project does not declare"
 file = "src/uiaudit/run/model.py"
-append = "import yaml\n"
+append = "import boto3\n"
 expect = { check = "deps", says = "DEP001" }
 
 [[plant]]
@@ -323,4 +323,4 @@ expect = { check = "mcp-legibility", says = "ENTRY POINT" }
 label = "a change under a reviewer's cover with no report from that reviewer"
 file = "src/uiaudit/kernel/principals.py"
 append = "\nROOT_GRANTS = frozenset({\"*\"})\n"
-expect = { check = "review", says = "no current report" }
+expect = { check = "review", says = "reviewer agent; it ends by running" }
