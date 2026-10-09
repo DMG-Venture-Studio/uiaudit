@@ -12,13 +12,13 @@ from uiaudit.kernel.envelope import Envelope
 
 # What a cold client receives on connect, and nothing else: the purpose, the entry point, one thing
 # the server is not for. Held in a constant so the static legibility probe can read it.
+ENTRY_POINT = "run_start"
 INSTRUCTIONS = (
     "uiaudit audits a web app's UI: it captures each route, state, viewport and theme cell, runs "
     "accessibility checks on it, and turns the findings into a fix plan a coding agent can execute. "
-    "Start with run_start to capture a cell; run_show reads a run back. "
+    f"Start with {ENTRY_POINT} to capture a cell; run_show reads a run back. "
     "It is not for triage: only a person accepts or rejects a finding, never a caller of this server."
 )
-ENTRY_POINT = "run_start"
 
 
 def tool_name(operation: Operation) -> str:

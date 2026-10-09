@@ -16,20 +16,19 @@ ones and the structural ones.
 
 ## Procedure
 
-1. Read `tools/reviewers.toml` for the paths you cover. Find what changed under them:
-   `git diff $(git merge-base HEAD origin/main 2>/dev/null || git rev-parse HEAD) -- <paths>` plus
-   `git status --porcelain` for uncommitted work. Read each changed file in full.
-2. For each new module, constant, list, rule or document, grep for where the same idea already lives
-   (`project-spec.toml`, `CONSTRAINTS.md`, `docs/tech/conventions.md`, the kernel, the toolkit). The
-   question for each is: when this changes, how many places must change with it?
-3. You never edit a file. Where the fix is a check rather than a cleanup (a rendered list instead of
-   a hand-kept one), say so; that is the finding worth most.
+Your cover is the `sprawl` entry of `tools/reviewers.toml`. Diff those paths from the merge base with
+`origin/main` (or from `HEAD` when there is none) and add whatever `git status --porcelain` shows
+uncommitted; then read every changed file whole, because a second home is rarely inside the diff.
+For each new module, constant, list, rule or document, grep for where the same idea already lives
+(`project-spec.toml`, `CONSTRAINTS.md`, `docs/tech/conventions.md`, the kernel, the toolkit), and
+ask: when this changes, how many places must change with it? You never edit a file. Where the fix
+is a check rather than a cleanup (a rendered list instead of a hand-kept one), say so; that is the
+finding worth most.
 
 ## Report
 
-Write plain prose, then one `FLAG: <one line>` per finding, each naming both homes and the one it
-should keep. No findings: write `No flags.` and say what you compared. End by recording the report,
-which the pre-push check requires:
+Plain prose, then `FLAG: <one line>` per finding naming both homes and the one to keep; `No flags.`
+plus what you compared when there are none. Finish by recording it, or the push is refused:
 
     uv run python tools/review_report.py sprawl <<'EOF'
     <your report>

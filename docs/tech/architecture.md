@@ -23,5 +23,5 @@ and names the command, because a hand edit is silently lost on the next regenera
 **Local gates name the line in the session that wrote it.** The checks in
 `.claude/serial-build.json` run from hooks: the edit checks after every edit to their paths, the
 stop checks when a session ends its turn with uncommitted changes under their paths that have not
-yet passed. Both run the same commands listed in `CLAUDE.md`, so a session and a person run the
+yet passed. Both run `tools/check.py`, which reads the constraints table, so a session and a person run the
 same thing.

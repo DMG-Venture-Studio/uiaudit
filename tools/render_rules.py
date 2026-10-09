@@ -72,7 +72,7 @@ def noun_rows(name: str, roles: list[str], depends: list[str]) -> list[Row]:
     out: list[Row] = []
     for i, role in enumerate(ordered):
         below = ", ".join(ordered[i + 1 :]) or "nothing in this noun"
-        reach = [f"`{d}.ops` and `{d}.model`" if role == "ops" else f"`{d}.model`" for d in depends]
+        reach = [f"{d}'s `ops` and `model`" if role == "ops" else f"{d}'s `model`" for d in depends]
         imports = "; ".join([f"{below}; the kernel", *reach])
         out.append((role, f"src/uiaudit/{name}/{role}.py", docstring(PACKAGE / name / f"{role}.py"), imports))
     return out
@@ -102,6 +102,7 @@ def tier_rules(spec: Table) -> dict[str, str]:
     flows, adapters = tables(spec, "flows"), tables(spec, "adapters")
     surfaces_table = spec.get("surfaces")
     surfaces = [k for k, v in surfaces_table.items() if v] if isinstance(surfaces_table, dict) else []
+    built = [m for m in KERNEL if (PACKAGE / "kernel" / f"{m}.py").exists()]
     kernel: list[Row] = [
         (
             "kernel",
@@ -109,8 +110,9 @@ def tier_rules(spec: Table) -> dict[str, str]:
             docstring(PACKAGE / "kernel" / f"{m}.py"),
             "the standard library",
         )
-        for m in KERNEL
+        for m in built
     ]
+    unbuilt = ", ".join(m for m in KERNEL if m not in built) or "none"
     flow_rows: list[Row] = [
         (
             "flow",
@@ -150,7 +152,8 @@ def tier_rules(spec: Table) -> dict[str, str]:
             ["src/uiaudit/kernel/**", "tests/kernel/**"],
             "kernel, the floor",
             "Principals, the result envelope, errors, the resource protocols, ids and the clock. Its member"
-            f" list is closed: {', '.join(KERNEL)}. It imports nothing of this project.",
+            f" list is closed: {', '.join(KERNEL)}. It imports nothing of this project."
+            f" Members not built yet: {unbuilt}.",
             rows(kernel),
         ),
         "tier-catalog": page(

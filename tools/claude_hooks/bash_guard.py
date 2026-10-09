@@ -1,12 +1,13 @@
 """PreToolUse on Bash: refuse the commands that switch the git hooks off.
 
-`git commit --no-verify` (or `-n`), `git push --no-verify`, `git merge --no-verify`, a one-off
-`-c core.hooksPath=...`, and `git config core.hooksPath` set to anything but this project's hooks
-are refused with exit 2, which blocks the call and shows the reason to the session. Quotes are
-dropped before reading, so `"git" commit --no-verify` is still git; the command is split at `;`,
-`&&`, `|`, newlines and subshells, and git is judged where it is the command, after `env`, `exec`
-and the like. A flag quoted inside a commit message is refused too; rephrase the message.
-Reads the hook's JSON from stdin; anything unreadable is allowed, so a bug here never blocks.
+`git commit` with `--no-verify` or `-n`, `git push` or `git merge` with `--no-verify`, a one-off
+`-c core.hooksPath=...`, a `GIT_CONFIG_*` variable naming core.hooksPath, and `git config
+core.hooksPath` set to anything but this project's hooks are refused with exit 2, which blocks the
+call and shows the reason to the session. Quotes are dropped before reading, so a quoted `"git"` is
+still git; the command is split at `;`, `&&`, `|`, newlines and subshells, and git is judged where
+it is the command: after `env`, `exec` and the like, and inside what a shell runs with `-c`. A flag
+quoted inside a commit message or a heredoc is refused too; rephrase it. Reads the hook's JSON
+from stdin; anything unreadable is allowed, so a bug here never blocks.
 """
 
 import json
@@ -16,23 +17,31 @@ import sys
 HOOKS_PATH = "tools/git_hooks"
 SPLIT = re.compile(r"[;&|\n`(){}]|\$\(")
 WRAPPERS = {"env", "command", "exec", "nohup", "time", "sudo", "doas", "nice", "ionice", "stdbuf", "xargs"}
+SHELLS = {"sh", "bash", "zsh", "dash", "ksh"}
+DASH_C = re.compile(r"^-[A-Za-z]*c[A-Za-z]*$")
+ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+GIT_CONFIG_ENV = re.compile(r"\bGIT_CONFIG\w*=\S*core\.hookspath", re.IGNORECASE)
 NO_VERIFY_SUBCOMMANDS = {"commit", "push", "merge", "rebase", "cherry-pick", "am", "revert"}
 SHORT_N = re.compile(r"^-[A-Za-z]*n[A-Za-z]*$")
 READ_CONFIG = {"--get", "--get-all", "--get-regexp", "--list", "-l", "--show-origin", "--show-scope"}
 WHY = (
     "Refused: {what} switches off the git hooks that hold this project's checks (CONSTRAINTS.md). "
-    "Run `make check`, fix what fails, and commit without it; a check that blocks something the "
-    "conventions require is reported, never bypassed."
+    "Run the checks (the Makefile's check target), fix what fails, and commit without it; a check "
+    "that blocks something the conventions require is reported, never bypassed."
 )
 
 
 def words(segment: str) -> list[str]:
-    """The segment's words with env assignments and wrappers stripped from the front."""
+    """The segment's words with env assignments, wrappers and `sh -c` stripped from the front."""
     tokens = segment.split()
-    while tokens and (
-        re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", tokens[0]) or tokens[0].rsplit("/", 1)[-1] in WRAPPERS
-    ):
-        tokens.pop(0)
+    while tokens:
+        head = tokens[0].rsplit("/", 1)[-1]
+        if ASSIGNMENT.match(tokens[0]) or head in WRAPPERS:
+            tokens.pop(0)
+        elif head in SHELLS and any(DASH_C.match(a) for a in tokens[1:]):
+            tokens = tokens[next(i for i, a in enumerate(tokens) if i and DASH_C.match(a)) + 1 :]
+        else:
+            break
     return tokens
 
 
@@ -68,6 +77,8 @@ def refusal(command: str) -> str | None:
     """Why the command is refused, or None when it may run."""
     cleaned = command.replace('"', "").replace("'", "").replace("\\", "")
     for segment in SPLIT.split(cleaned):
+        if GIT_CONFIG_ENV.search(segment):
+            return WHY.format(what="a GIT_CONFIG_* variable setting core.hooksPath")
         tokens = words(segment)
         if not tokens or tokens[0].rsplit("/", 1)[-1] != "git":
             continue

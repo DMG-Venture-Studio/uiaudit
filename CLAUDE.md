@@ -47,13 +47,8 @@ Commit finished, proven work without asking. Never move a gate to done before Fi
 ## Commands
 
 ```
-uv sync  # tools
-uv run ruff check . && uv run ruff format --check .  # lint, format
-uv run pyrefly check  # types
-uv run python tools/toolkit/render_import_contracts.py --check project-spec.toml contracts.toml src/uiaudit  # contracts match the spec
-PYTHONPATH=src uv run lint-imports --config contracts.toml  # import contracts
-uv run deptry src  # dependencies
-uv run pytest  # tests
-uv run python tools/toolkit/harness_audit.py --gate  # context budgets
-uv run python tools/toolkit/prove_checks.py plants.toml  # plants
+uv sync       # tools
+make setup    # switch the git hooks on in this clone
+make check    # every check in CONSTRAINTS.md, the one list of commands; one line each
+make plants   # prove every check and hook refuses its planted violation
 ```

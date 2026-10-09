@@ -1,6 +1,6 @@
 ---
 name: authority-reviewer
-description: Answers one question about a change: does it grant authority, spend money, or touch secrets it should not? Flags and routes, never blocks. Run before a push that touches the paths tools/reviewers.toml lists for it (principals, catalog, boot, surfaces, adapters, hooks, CI, settings); its report is required by the pre-push review check.
+description: One question per change, does it grant authority, spend money, or touch secrets it should not? It raises flags for Fili to decide and never blocks on its own. Run it before pushing a change to principals, the catalog, boot, surfaces, adapters, hooks, CI or settings (the authority cover in tools/reviewers.toml); a push without its report is refused.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---

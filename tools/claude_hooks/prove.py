@@ -56,6 +56,9 @@ BASH_CASES = [
             "git config --unset core.hooksPath",
             'cd src && "git" commit --no-verify',
             "uv run ruff check . && git commit -m x --no-verify",
+            'sh -c "git commit --no-verify -m x"',
+            "bash -lc 'git push --no-verify'",
+            "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x",
         )
     ),
     *(
@@ -70,6 +73,7 @@ BASH_CASES = [
             'grep -rn "git commit --no-verify" docs',
             "make check",
             "ls",
+            'sh -c "ls && git status"',
         )
     ),
 ]

@@ -14,9 +14,9 @@ Depends on: finding. Never imports environment, run, plan, design_reference or a
 
 | Role | Module | What it is | May import |
 |---|---|---|---|
-| ops | `src/uiaudit/regression_test/ops.py` | The regression_test's operations, one function each, named regression_test_<verb>. | render, model; the kernel; `finding.ops` and `finding.model` |
-| render | `src/uiaudit/regression_test/render.py` | Outward forms of a regression_test: message bodies, exports, files, reports. | model; the kernel; `finding.model` |
-| model | `src/uiaudit/regression_test/model.py` | The regression_test's records and its own errors. | nothing in this noun; the kernel; `finding.model` |
+| ops | `src/uiaudit/regression_test/ops.py` | The regression_test's operations, one function each, named regression_test_<verb>. | render, model; the kernel; finding's `ops` and `model` |
+| render | `src/uiaudit/regression_test/render.py` | Outward forms of a regression_test: message bodies, exports, files, reports. | model; the kernel; finding's `model` |
+| model | `src/uiaudit/regression_test/model.py` | The regression_test's records and its own errors. | nothing in this noun; the kernel; finding's `model` |
 
 
 Roles it does not declare are not created; a new role is added to this noun's `roles` in the spec first. Tests: `tests/regression_test/test_<role>.py`.
