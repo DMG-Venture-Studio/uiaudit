@@ -42,6 +42,10 @@ name = "ways-in"
 run = ["uv", "run", "python", "tools/ways_in.py"]
 
 [[check]]
+name = "ratchet"
+run = ["uv", "run", "python", "tools/ratchet.py"]
+
+[[check]]
 name = "surfaces-render"
 run = ["uv", "run", "python", "tools/render_surfaces.py", "--check"]
 
@@ -266,3 +270,21 @@ label = "python -m spelled inside a noun"
 file = "src/uiaudit/run/render.py"
 append = "\nCOMMAND = [\"python\", \"-m\", \"uiaudit\", \"run\", \"start\"]\n"
 expect = { check = "ways-in", says = "python -m" }
+
+[[plant]]
+label = "a ledger grows without Debt-Raised"
+file = "tools/ledgers/ruff.txt"
+append = "src/uiaudit/run/model.py\tE501\tone long line\n"
+expect = { check = "ratchet", says = "grows" }
+
+[[plant]]
+label = "a suppression comment in code that no ledger lists"
+file = "src/uiaudit/run/model.py"
+append = "\nUNUSED = 1  # noqa: F841\n"
+expect = { check = "ratchet", says = "not in any ledger" }
+
+[[plant]]
+label = "a per-file ignore added for new code"
+file = "ruff.toml"
+append = "\"src/uiaudit/run/**\" = [\"D\"]\n"
+expect = { check = "ratchet", says = "per-file-ignores grows" }

@@ -33,7 +33,7 @@ Read this before writing code. Do not weaken it to make a change pass.
 | One home | a literal bound to constants in two modules, or spelled out where a constant names it | `uv run python tools/one_home.py` | stop, push, CI | built |
 | Ways in | no main guard, load-by-name or `python -m` outside `src/uiaudit/surfaces/`, and every console script points into the surfaces; ruff's `banned-api` refuses the direct spellings | `uv run python tools/ways_in.py` | stop, push, CI | built |
 | Surface parity | every operation on every surface it declares; the committed OpenAPI document, MCP tool list and CLI help under `docs/api/` equal what the catalog renders | `uv run python tools/render_surfaces.py --check && uv run pytest -q tests/test_surface_parity.py` | stop, push, CI | built |
-| Debt ratchet | no ledger grows against `main`, no rule removed, no limit raised, unless the commit says `Debt-Raised: <reason>` | the toolkit's ratchet in the commit-msg hook | commit, CI | to build |
+| Debt ratchet | no ledger under `tools/ledgers/` grows against `main`, no suppression in code outside a ledger, no rule removed, no limit or budget raised, no plant dropped, unless the commit says `Debt-Raised: <reason>` | `uv run python tools/ratchet.py` (the commit-msg hook runs it on the index with the message) | commit, CI | built |
 | No bypass | `--no-verify`, `-n` and hooks-path overrides refused | a Claude Code PreToolUse hook and the git hooks, each with a plant | every command | to build |
 | MCP legibility | the server sends an `instructions=` block naming its entry-point tool | mcp-legibility's static probe (`probe_connect.py --repo . --json`) | push | to build |
 

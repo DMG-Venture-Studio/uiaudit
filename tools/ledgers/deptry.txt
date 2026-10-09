@@ -1,0 +1,3 @@
+# deptry exemptions: one per line, "path<TAB>rule<TAB>reason". Starts empty; may only shrink against main
+# unless the commit carries a "Debt-Raised: <reason>" trailer. A suppression comment in code whose
+# path and rule are not listed here is refused by tools/ratchet.py.
