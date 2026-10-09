@@ -1,4 +1,5 @@
 {
+  "worktree": { "baseRef": "head", "symlinkDirectories": [".venv"] },
   "extraKnownMarketplaces": {
     "serial-build-harness": {
       "source": {

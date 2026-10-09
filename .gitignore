@@ -7,3 +7,8 @@ __pycache__/
 .env
 .DS_Store
 .claude/settings.local.json
+# The inbox other sessions drop files into; handled items move to their home or are deleted.
+claude_outputs/*
+!claude_outputs/README.md
+# Claude Code's per-agent worktrees (the red lane works in one) and per-user permissions.
+.claude/worktrees/
