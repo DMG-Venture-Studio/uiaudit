@@ -1,0 +1,72 @@
+# The planted violations for the hooks: the four git hooks under tools/git_hooks/ and the Claude Code
+# hooks under tools/claude_hooks/, each run the way git or Claude Code runs it. Slower than plants.toml
+# because pre-push runs every check; run it when a hook changes and weekly in CI:
+#   uv run python tools/toolkit/prove_checks.py plants-hooks.toml
+
+[[check]]
+name = "pre-commit"
+run = ["sh", "tools/git_hooks/pre-commit"]
+
+[[check]]
+name = "pre-merge-commit"
+run = ["sh", "tools/git_hooks/pre-merge-commit"]
+
+[[check]]
+name = "commit-msg"
+run = ["sh", "-c", "f=$(mktemp) && printf 'A planted message\\n' > \"$f\" && sh tools/git_hooks/commit-msg \"$f\""]
+
+[[check]]
+name = "pre-push"
+run = ["sh", "-c", "sh tools/git_hooks/pre-push origin git@github.com:DMG-Venture-Studio/uiaudit.git < /dev/null"]
+
+[[check]]
+name = "claude-hooks"
+run = ["uv", "run", "python", "tools/claude_hooks/prove.py"]
+
+[[plant]]
+label = "pre-commit: an always-loaded rule names a file that does not exist"
+file = ".claude/rules/planted.md"
+create = "# Planted\n\nRead `docs/missing.md` before anything.\n"
+expect = { check = "pre-commit", says = "path(s) that do not exist" }
+
+[[plant]]
+label = "pre-merge-commit: the same phantom path at a merge"
+file = ".claude/rules/planted.md"
+create = "# Planted\n\nRead `docs/missing.md` before anything.\n"
+expect = { check = "pre-merge-commit", says = "path(s) that do not exist" }
+
+[[plant]]
+label = "commit-msg: a ledger grows and the message raises no debt"
+file = "tools/ledgers/pyrefly.txt"
+append = "src/uiaudit/run/model.py\tbad-assignment\tbecause\n"
+expect = { check = "commit-msg", says = "grows" }
+
+[[plant]]
+label = "pre-push: a failing test"
+file = "tests/test_planted.py"
+create = "def test_planted():\n    assert 1 == 2\n"
+expect = { check = "pre-push", says = "failed" }
+
+[[plant]]
+label = "the settings file stops parsing, which drops every Claude Code hook"
+file = ".claude/settings.json"
+append = "}\n"
+expect = { check = "claude-hooks", says = "not valid JSON" }
+
+[[plant]]
+label = "the bash guard crashes, and a crash is an allowance"
+file = "tools/claude_hooks/bash_guard.py"
+append = "\n(\n"
+expect = { check = "claude-hooks", says = "allowed" }
+
+[[plant]]
+label = "the new-module guard crashes, and a crash is an allowance"
+file = "tools/claude_hooks/new_module_guard.py"
+append = "\n(\n"
+expect = { check = "claude-hooks", says = "allowed" }
+
+[[plant]]
+label = "the session-start hook crashes and warns no one"
+file = "tools/claude_hooks/session_start.py"
+append = "\n(\n"
+expect = { check = "claude-hooks", says = "did not warn" }

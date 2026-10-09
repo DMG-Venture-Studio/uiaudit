@@ -1,0 +1,19 @@
+#!/bin/sh
+# pre-push: every row of CONSTRAINTS.md that runs at push, which includes the review check, plus the
+# plants when a check's configuration changed since the commit the remote holds. Git hands the refs
+# being pushed on stdin; the remote's commit is the base for "what changed".
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+zero=0000000000000000000000000000000000000000
+remote_sha=
+while read -r _local_ref _local_sha _remote_ref sha; do remote_sha=$sha; done
+base=$(git rev-parse --verify -q origin/main 2>/dev/null || true)
+if [ -n "$remote_sha" ] && [ "$remote_sha" != "$zero" ]; then base=$remote_sha; fi
+flag=
+if [ -n "$base" ]; then
+  changed=$(git diff --name-only "$base" HEAD -- CONSTRAINTS.md plants.toml plants-hooks.toml ruff.toml \
+    pyproject.toml harness.toml contracts.toml project-spec.toml tools .claude/settings.json \
+    .claude/serial-build.json .github 2>/dev/null || true)
+  if [ -n "$changed" ]; then flag=--checks-changed; fi
+fi
+exec uv run python tools/check.py --stage push $flag

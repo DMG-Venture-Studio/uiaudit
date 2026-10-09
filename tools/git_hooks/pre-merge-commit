@@ -1,0 +1,5 @@
+#!/bin/sh
+# pre-merge-commit: a merge commit passes the same gate as any other commit.
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+exec uv run python tools/check.py --stage commit

@@ -1,5 +1,10 @@
 {
-  "worktree": { "baseRef": "head", "symlinkDirectories": [".venv"] },
+  "worktree": {
+    "baseRef": "head",
+    "symlinkDirectories": [
+      ".venv"
+    ]
+  },
   "extraKnownMarketplaces": {
     "serial-build-harness": {
       "source": {
@@ -43,6 +48,41 @@
       "Skill(agent-skills:ship *)",
       "Edit(/tasks/**)",
       "Edit(/SPEC.md)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-sync python tools/claude_hooks/bash_guard.py",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-sync python tools/claude_hooks/new_module_guard.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-sync python tools/claude_hooks/session_start.py",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }

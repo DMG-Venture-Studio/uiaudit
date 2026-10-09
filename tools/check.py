@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CONSTRAINTS = ROOT / "CONSTRAINTS.md"
 COMMAND = re.compile(r"`([^`]+)`")
-STAGES = ("edit", "stop", "commit", "push", "ci", "weekly")
+STAGES = ("edit", "stop", "commit", "commit-msg", "push", "ci", "weekly")
 # Rows whose "Runs at" cell says they run at push only when a check changed.
 CONDITIONAL = "when a check changes"
 COLUMNS = 5  # Dimension | Rule | Checked by | Runs at | Status
@@ -46,7 +46,7 @@ class Row:
             return False
         if CONDITIONAL in cell and not checks_changed:
             return False
-        return stage in cell or (stage == "ci" and "ci" in cell)
+        return stage in re.findall(r"[a-z][a-z-]*", cell)
 
 
 def rows(text: str) -> list[Row]:
