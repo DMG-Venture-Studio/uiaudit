@@ -33,6 +33,14 @@ run = ["uv", "run", "python", "tools/toolkit/harness_audit.py", "--gate"]
 name = "tests"
 run = ["uv", "run", "pytest", "-q"]
 
+[[check]]
+name = "surfaces-render"
+run = ["uv", "run", "python", "tools/render_surfaces.py", "--check"]
+
+[[check]]
+name = "surface-parity"
+run = ["uv", "run", "pytest", "-q", "tests/test_surface_parity.py"]
+
 [[plant]]
 label = "a role imports a role above it"
 file = "src/uiaudit/run/model.py"
@@ -196,3 +204,23 @@ label = "a failing test"
 file = "tests/test_planted.py"
 create = "def test_planted():\n    assert 1 == 2\n"
 expect = { check = "tests", says = "failed" }
+
+[[plant]]
+label = "the committed CLI help no longer matches the catalog"
+file = "docs/api/cli-help.txt"
+append = "  run start                    Capture one cell.\n"
+expect = { check = "surfaces-render", says = "out of date" }
+
+[[plant]]
+label = "an operation enters the catalog but the committed OpenAPI document is not re-rendered"
+file = "src/uiaudit/catalog/index.py"
+append = "OPERATIONS[\"run.start\"] = Operation(\"run.start\", \"Capture one cell.\", \"run.start\", \"external\")\n"
+expect = { check = "surfaces-render", says = "openapi.json" }
+
+[[plant]]
+label = "an operation declares the mcp surface but the mcp surface drops it"
+edits = [
+  { file = "src/uiaudit/catalog/index.py", append = "OPERATIONS[\"run.start\"] = Operation(\"run.start\", \"Capture one cell.\", \"run.start\", \"external\")\n" },
+  { file = "src/uiaudit/surfaces/mcp.py", append = "\n\ndef listing() -> list[str]:\n    \"\"\"Nothing.\"\"\"\n    return []\n" },
+]
+expect = { check = "surface-parity", says = "does not expose" }

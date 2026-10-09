@@ -1,0 +1,5 @@
+{
+  "instructions": "uiaudit audits a web app's UI: it captures each route, state, viewport and theme cell, runs accessibility checks on it, and turns the findings into a fix plan a coding agent can execute. Start with run_start to capture a cell; run_show reads a run back. It is not for triage: only a person accepts or rejects a finding, never a caller of this server.",
+  "entry_point": "run_start",
+  "tools": []
+}

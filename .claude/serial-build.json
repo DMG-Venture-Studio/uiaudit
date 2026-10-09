@@ -8,6 +8,10 @@
     {
       "path": "contracts.toml",
       "regenerate": "uv run python tools/toolkit/render_import_contracts.py project-spec.toml contracts.toml src/uiaudit"
+    },
+    {
+      "path": "docs/api/*",
+      "regenerate": "uv run python tools/render_surfaces.py"
     }
   ],
   "checks": {

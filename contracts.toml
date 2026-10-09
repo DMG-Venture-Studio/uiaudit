@@ -39,6 +39,12 @@ exhaustive = true
 layers = ["(cli) | (http) | (mcp)"]
 
 [[tool.importlinter.contracts]]
+name = "Only the mcp surface imports fastmcp"
+type = "protected"
+protected_modules = ["fastmcp"]
+allowed_importers = ["uiaudit.surfaces.mcp"]
+
+[[tool.importlinter.contracts]]
 name = "Test tooling never ships in the runtime"
 type = "forbidden"
 source_modules = ["uiaudit"]

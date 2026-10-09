@@ -3,7 +3,9 @@ name = "uiaudit"
 version = "0.0.0"
 description = "uiaudit is an agent-driven UI audit that captures every screen state of an app and turns accessibility and look-and-feel findings into recommendations and a fix plan a coding agent can execute"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastmcp==4.1.0",
+]
 
 [project.scripts]
 uiaudit = "uiaudit.surfaces.cli:main"

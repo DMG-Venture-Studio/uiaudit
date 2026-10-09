@@ -1,0 +1,5 @@
+usage: uiaudit <noun> <verb> [--json]
+
+commands:
+
+Data on stdout as the versioned envelope, diagnostics on stderr; a nonzero exit is an error.

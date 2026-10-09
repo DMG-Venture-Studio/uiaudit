@@ -18,3 +18,8 @@ class Operation:
 
 # An operation enters the catalog when its slice is built; project-spec.toml holds the plan.
 OPERATIONS: dict[str, Operation] = {}
+
+
+def on_surface(surface: str) -> list[Operation]:
+    """The operations exposed on one surface, in name order; what that surface must project."""
+    return [OPERATIONS[name] for name in sorted(OPERATIONS) if surface in OPERATIONS[name].surfaces]
