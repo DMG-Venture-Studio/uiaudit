@@ -11,6 +11,6 @@ setup:  ## switch the git hooks on for this clone
 	chmod +x tools/git_hooks/pre-commit tools/git_hooks/commit-msg tools/git_hooks/pre-push tools/git_hooks/pre-merge-commit
 	@echo "git hooks on: core.hooksPath = tools/git_hooks"
 
-plants:  ## prove every check refuses its planted violation
-	uv run python tools/toolkit/prove_checks.py plants.toml
-	uv run python tools/toolkit/prove_checks.py plants-hooks.toml
+plants:  ## prove every check and hook refuses its planted violation; the variable stops pre-push re-running this
+	UIAUDIT_PLANTS=1 uv run python tools/toolkit/prove_checks.py plants.toml
+	UIAUDIT_PLANTS=1 uv run python tools/toolkit/prove_checks.py plants-hooks.toml

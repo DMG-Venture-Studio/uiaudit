@@ -18,6 +18,7 @@ run = ["sh", "-c", "f=$(mktemp) && printf 'A planted message\\n' > \"$f\" && sh 
 [[check]]
 name = "pre-push"
 run = ["sh", "-c", "sh tools/git_hooks/pre-push origin git@github.com:DMG-Venture-Studio/uiaudit.git < /dev/null"]
+env = { UIAUDIT_PLANTS = "1" }  # the hook skips the plants when the plants are what is running it
 
 [[check]]
 name = "claude-hooks"

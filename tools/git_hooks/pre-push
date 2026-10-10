@@ -10,7 +10,9 @@ while read -r _local_ref _local_sha _remote_ref sha; do remote_sha=$sha; done
 base=$(git rev-parse --verify -q origin/main 2>/dev/null || true)
 if [ -n "$remote_sha" ] && [ "$remote_sha" != "$zero" ]; then base=$remote_sha; fi
 flag=
-if [ -n "$base" ]; then
+# Inside a plants run (UIAUDIT_PLANTS set by the Makefile and the hooks plants file) the plants are
+# what is running this hook, so running them again here would recurse without end.
+if [ -n "$base" ] && [ -z "${UIAUDIT_PLANTS:-}" ]; then
   changed=$(git diff --name-only "$base" HEAD -- CONSTRAINTS.md plants.toml plants-hooks.toml ruff.toml \
     pyproject.toml harness.toml contracts.toml project-spec.toml tools .claude/settings.json \
     .claude/serial-build.json .github 2>/dev/null || true)
