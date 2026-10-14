@@ -1,9 +1,9 @@
 # Budgets and conventions for tools/toolkit/harness_audit.py. This file is the harness auditor's conventions file:
-# a finding the weekly audit raises twice becomes a rule or a tighter number here, and numbers only go down.
+# a finding the audit raises twice becomes a rule or a tighter number here, and numbers only go down.
 # Raising one is a decision record, not an edit.
 
 [harness]
-since = "7 days ago"                       # the weekly window
+since = "7 days ago"                       # the window a hand-run audit reports over
 code_dirs = ["src", "tools", "tests", "migrations", "web/src"]
 instruction_files = ["AGENTS.md", "CLAUDE.md", ".claude/CLAUDE.md", "CLAUDE.local.md"]
 exclude = ["docs/decisions/sources/*", ".claude/skills/better-cli/*"]                               # added to the defaults (vendor/, .venv/, generated client, worktrees)

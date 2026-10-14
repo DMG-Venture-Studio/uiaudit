@@ -1,6 +1,6 @@
 ---
 name: harness-auditor
-description: Weekly judgment pass over tools/toolkit/harness_audit.py's report. Verifies what the docs agents read claim against the code, sorts instructions into enforced, model-default, needed and unenforced, and weighs each gate's cost against what it catches. Flags and routes; never edits. Use when a harness report exists or someone asks whether the harness costs more than it catches.
+description: Judgment pass, run when a session is asked, over tools/toolkit/harness_audit.py's report. Verifies what the docs agents read claim against the code, sorts instructions into enforced, model-default, needed and unenforced, and weighs each gate's cost against what it catches. Flags and routes; never edits. Use when a harness report exists or someone asks whether the harness costs more than it catches.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---

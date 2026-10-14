@@ -55,8 +55,8 @@ smallest form that passes its plants, and reported back to the scaffolder so it 
 | Path-scoped rules | One `.claude/rules/` file per noun and tier, rendered from the spec and the module docstrings (what each module is for, what it may import), with a drift check; the files are on the pre-edit refusal list. |
 | Reviewer agents | One question each, flag and route, never block alone: **adversarial** (does the code do what the commit claims), **authority** (grants, spend, secrets), **sprawl** (does this give an idea a second home). The pre-push review check requires their reports for the paths they cover. |
 | Decision records | One per new noun, adapter or surface, or rule change, naming the rejected alternative (format in `docs/tech/conventions.md`). |
-| Harness audit | `tools/toolkit/harness_audit.py` measures context weight, phantom paths, duplicated text, names with no code, state kept in prose, check cost and repetition, and agent and skill use. The `harness-auditor` agent judges what it cannot measure, weekly, and a finding raised a third time must come with a check. |
-| CI | The same commands; required by branch protection; the plants in a second job on every push; the harness audit's collector weekly, with no model. |
+| Harness audit | `tools/toolkit/harness_audit.py` measures context weight, phantom paths, duplicated text, names with no code, state kept in prose, check cost and repetition, and agent and skill use. The `harness-auditor` agent judges what it cannot measure when a session is asked to run it, and a finding raised a third time must come with a check. |
+| CI | The same commands; required by branch protection; the plants in a second job on every push; no workflow runs on a schedule, which the No schedule check holds. |
 
 ## Acceptance for the first session
 
@@ -81,4 +81,4 @@ The enforcement work is finished when all of these hold and the session's last m
 | Every push | Everything, tests included, and the reviewer reports the paths need. |
 | Every spec change | Re-render contracts and agent rules, decision record, adversarial review. |
 | Every tool upgrade | A commit that bumps the lock alone. New findings are fixed or recorded with a reason, never silenced in place. The plants re-run. |
-| Weekly (scheduled) | The harness audit and its auditor, dependency audit, knip and vulture reports: one short report of what moved. |
+| When asked | The harness audit and its auditor, run in a session and reported there. |

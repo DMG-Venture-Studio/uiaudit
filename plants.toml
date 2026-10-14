@@ -65,6 +65,10 @@ run = ["uv", "run", "python", "tools/render_surfaces.py", "--check"]
 name = "surface-parity"
 run = ["uv", "run", "pytest", "-q", "tests/test_surface_parity.py"]
 
+[[check]]
+name = "no-schedule"
+run = ["sh", "-c", "if grep -rn \"schedule:\" .github/workflows; then echo \"that workflow runs on a schedule; nothing in this repository is scheduled\"; exit 1; fi"]
+
 [[plant]]
 label = "a role imports a role above it"
 file = "src/uiaudit/run/model.py"
@@ -324,3 +328,9 @@ label = "a change under a reviewer's cover with no report from that reviewer"
 file = "src/uiaudit/kernel/principals.py"
 append = "\nROOT_GRANTS = frozenset({\"*\"})\n"
 expect = { check = "review", says = "reviewer agent; it ends by running" }
+
+[[plant]]
+label = "a workflow that runs on a schedule"
+file = ".github/workflows/planted.yml"
+create = "name: planted\non:\n  schedule:\n    - cron: \"0 0 * * *\"\njobs: {}\n"
+expect = { check = "no-schedule", says = "runs on a schedule" }
