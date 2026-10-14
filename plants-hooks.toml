@@ -1,6 +1,6 @@
 # The planted violations for the hooks: the four git hooks under tools/git_hooks/ and the Claude Code
 # hooks under tools/claude_hooks/, each run the way git or Claude Code runs it. Slower than plants.toml
-# because pre-push runs every check; run it when a hook changes and weekly in CI:
+# because pre-push runs every check; run it when a hook changes, and CI runs it on every push:
 #   uv run python tools/toolkit/prove_checks.py plants-hooks.toml
 
 [[check]]
@@ -18,7 +18,6 @@ run = ["sh", "-c", "f=$(mktemp) && printf 'A planted message\\n' > \"$f\" && sh 
 [[check]]
 name = "pre-push"
 run = ["sh", "-c", "sh tools/git_hooks/pre-push origin git@github.com:DMG-Venture-Studio/uiaudit.git < /dev/null"]
-env = { UIAUDIT_PLANTS = "1" }  # the hook skips the plants when the plants are what is running it
 
 [[check]]
 name = "claude-hooks"

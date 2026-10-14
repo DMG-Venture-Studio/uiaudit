@@ -5,9 +5,9 @@ runner reads it rather than keeping a second list: a row whose command does not 
 and a row with no command is skipped and said so. Checks run in parallel; the output of each failed
 one is printed after the summary.
 
-    uv run python tools/check.py                 # the CI stage: everything that is not weekly
+    uv run python tools/check.py                 # the CI stage: everything but the proofs
     uv run python tools/check.py --stage commit  # the rows whose local stage is the commit
-    uv run python tools/check.py --stage push --checks-changed
+    uv run python tools/check.py --stage proofs  # every check refuses its planted violation
     uv run python tools/check.py --list
 """
 
@@ -24,9 +24,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CONSTRAINTS = ROOT / "CONSTRAINTS.md"
 COMMAND = re.compile(r"`([^`]+)`")
-STAGES = ("edit", "stop", "commit", "commit-msg", "push", "ci", "weekly")
-# Rows whose "Runs at" cell says they run at push only when a check changed.
-CONDITIONAL = "when a check changes"
+STAGES = ("edit", "stop", "commit", "commit-msg", "push", "ci", "proofs")
+# The proofs row runs every check against its planted violations, so it runs only at its own stage.
+EXCLUSIVE = "proofs"
 COLUMNS = 5  # Dimension | Rule | Checked by | Runs at | Status
 
 
@@ -39,14 +39,12 @@ class Row:
     runs_at: str
     status: str
 
-    def runs_at_stage(self, stage: str, *, checks_changed: bool) -> bool:
-        """Whether this row belongs to the stage; weekly rows only to the weekly stage."""
-        cell = self.runs_at.lower()
-        if stage == "push" and CONDITIONAL in cell:
-            return checks_changed
-        if "weekly" in cell and stage != "weekly":
+    def runs_at_stage(self, stage: str) -> bool:
+        """Whether this row belongs to the stage; the proofs row only to the proofs stage."""
+        stages = re.findall(r"[a-z][a-z-]*", self.runs_at.lower())
+        if EXCLUSIVE in stages and stage != EXCLUSIVE:
             return False
-        return stage in re.findall(r"[a-z][a-z-]*", cell)
+        return stage in stages
 
 
 def rows(text: str) -> list[Row]:
@@ -98,11 +96,10 @@ def main(argv: list[str] | None = None) -> int:
     """Run the stage's checks in parallel and report; exit 1 when any fails."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", choices=STAGES, default="ci")
-    parser.add_argument("--checks-changed", action="store_true", help="include the conditional push rows")
     parser.add_argument("--list", action="store_true", help="print the stage's commands and exit")
     args = parser.parse_args(argv)
     table = rows(CONSTRAINTS.read_text())
-    chosen = [r for r in table if r.runs_at_stage(args.stage, checks_changed=args.checks_changed)]
+    chosen = [r for r in table if r.runs_at_stage(args.stage)]
     runnable = [r for r in chosen if r.command]
     for row in chosen:
         if not row.command:

@@ -9,7 +9,7 @@ says how they are owned, proven and kept, and what the first Claude Code session
    `CLAUDE.md` and `.claude/rules/` are context, not enforcement.
 2. **No check is trusted until it has failed.** Every check has at least one planted violation in a plants
    file, and `prove_checks.py` shows the check refusing it and the tree coming back clean. The plants re-run
-   on a schedule, so a check that quietly stops working is caught.
+   in CI on every push, so a check that quietly stops working is caught.
 3. **Generated, never hand-kept.** The import contracts, the path-scoped agent rules, the OpenAPI document,
    the MCP tool list, the CLI help and the web client are rendered from the spec or the catalog, and each
    has a `--check` drift check.
@@ -56,7 +56,7 @@ smallest form that passes its plants, and reported back to the scaffolder so it 
 | Reviewer agents | One question each, flag and route, never block alone: **adversarial** (does the code do what the commit claims), **authority** (grants, spend, secrets), **sprawl** (does this give an idea a second home). The pre-push review check requires their reports for the paths they cover. |
 | Decision records | One per new noun, adapter or surface, or rule change, naming the rejected alternative (format in `docs/tech/conventions.md`). |
 | Harness audit | `tools/toolkit/harness_audit.py` measures context weight, phantom paths, duplicated text, names with no code, state kept in prose, check cost and repetition, and agent and skill use. The `harness-auditor` agent judges what it cannot measure, weekly, and a finding raised a third time must come with a check. |
-| CI | The same commands; required by branch protection; the plants and the harness audit weekly. |
+| CI | The same commands; required by branch protection; the plants in a second job on every push; the harness audit's collector weekly, with no model. |
 
 ## Acceptance for the first session
 
@@ -81,4 +81,4 @@ The enforcement work is finished when all of these hold and the session's last m
 | Every push | Everything, tests included, and the reviewer reports the paths need. |
 | Every spec change | Re-render contracts and agent rules, decision record, adversarial review. |
 | Every tool upgrade | A commit that bumps the lock alone. New findings are fixed or recorded with a reason, never silenced in place. The plants re-run. |
-| Weekly (scheduled) | Plants, the harness audit and its auditor, dependency audit, knip and vulture reports, ledger counts: one short report of what moved. |
+| Weekly (scheduled) | The harness audit and its auditor, dependency audit, knip and vulture reports: one short report of what moved. |

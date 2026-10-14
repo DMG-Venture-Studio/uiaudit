@@ -1,5 +1,6 @@
 # Every push and pull request runs the same checks the hooks run locally, through the same runner,
-# so CI never disagrees with a session. Branch protection on main requires this job.
+# so CI never disagrees with a session. Branch protection on main requires the check job. The plants
+# job proves, beside it, that every check still refuses its planted violation, and counts the ledgers.
 name: check
 
 on:
@@ -30,3 +31,35 @@ jobs:
         run: uv run python tools/ratchet.py --base ${{ github.event.before }}
       - name: The git hooks are executable in the tree
         run: test -x tools/git_hooks/pre-commit && test -x tools/git_hooks/commit-msg && test -x tools/git_hooks/pre-push && test -x tools/git_hooks/pre-merge-commit
+
+  plants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.0"
+          python-version: "3.12"
+      - name: Tools
+        run: uv sync --frozen
+      - name: Every check and every hook refuses its planted violation
+        run: uv run python tools/check.py --stage proofs 2>&1 | tee plants.log
+      - name: Ledger counts
+        if: always()
+        run: |
+          {
+            echo "## Ledgers"
+            echo "| Ledger | Entries |"
+            echo "|---|---|"
+            for f in tools/ledgers/*.txt; do
+              n=$(grep -v '^#' "$f" | grep -c . || true)
+              echo "| $(basename "$f" .txt) | $n |"
+            done
+            echo
+            echo "## Plants"
+            echo '```'
+            cat plants.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
